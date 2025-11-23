@@ -1,0 +1,292 @@
+<!--  
+     |  ___|  __ \  |   |  _ \   _ \   
+     | |      |   | |   | |   | |   |  
+ \   | |      |   | |   | __ <  |   |  
+\___/ \____| ____/ \___/ _| \_\\___/   
+                                       
+  ___|  _ \  __ \  ____|    _ )   _ _| __ \  ____|    \     ___|  
+ |     |   | |   | __|     _ \ \   |  |   | __|     _ \  \___ \  
+ |     |   | |   | |      ( `  <   |  |   | |      ___ \       | 
+\____|\___/ ____/ _____| \___/\/ ___|____/ _____|_/    _\_____/  
+
+  https://jcduro.bexartideas.com/index.php | 2025 | JC Duro Code & Ideas
+
+-->
+
+<!DOCTYPE html>
+
+
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kanban Board Pro</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --column-bg: #ebecf0;
+      --card-bg: #ffffff;
+      --text-color: #172b4d;
+      --primary-color: #5e6c84;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: var(--bg-gradient);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    header h1 { margin: 0; font-size: 1.5rem; }
+    
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-weight: 500;
+      transition: opacity 0.3s;
+    }
+    nav a:hover { opacity: 0.8; }
+
+    main {
+      flex: 1;
+      padding: 2rem;
+      overflow-x: auto; /* Para scroll horizontal en móviles */
+    }
+
+    /* Tablero Kanban */
+    .board {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .column {
+      background: var(--column-bg);
+      width: 300px;
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .column-header {
+      padding: 10px 15px;
+      font-weight: 600;
+      color: var(--text-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .column-content {
+      min-height: 100px; /* Zona de drop garantizada */
+      padding: 5px;
+    }
+
+    /* Estilos de las Tarjetas */
+    .item {
+      background: var(--card-bg);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: grab;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+      transition: transform 0.2s, box-shadow 0.2s;
+      border-left: 4px solid transparent;
+    }
+
+    .item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+
+    .item:active { cursor: grabbing; }
+
+    /* Estilos internos de tarjeta */
+    .tag {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      color: white;
+      display: inline-block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .tag-high { background-color: #ff5252; }
+    .tag-med { background-color: #ffb142; }
+    .tag-low { background-color: #2ccce4; }
+    
+    .item h4 { margin: 0 0 5px 0; font-size: 1rem; }
+    .item p { margin: 0; font-size: 0.85rem; color: var(--primary-color); }
+    
+    .item-footer {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+
+    /* Clases para Sortable */
+    .sortable-ghost { opacity: 0.4; background: #c8ebfb; }
+    .sortable-drag { opacity: 1; transform: scale(1.05); }
+
+    footer {
+      text-align: center;
+      color: rgba(255,255,255,0.6);
+      padding: 1rem;
+      font-size: 0.9rem;
+    }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+      .board { flex-direction: column; align-items: center; }
+      .column { width: 90%; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <i class="fas fa-tasks"></i> <span>TaskFlow</span>
+    </div>
+    <nav>
+      <a href="#">Tablero</a>
+      <a href="#">Equipo</a>
+      <a href="#">Config</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="board">
+      
+      <div class="column">
+        <div class="column-header">Por Hacer <i class="fas fa-circle" style="color: #ff5252; font-size: 0.7em;"></i></div>
+        <div class="column-content" id="col-todo">
+          </div>
+      </div>
+
+      <div class="column">
+        <div class="column-header">En Proceso <i class="fas fa-circle" style="color: #ffb142; font-size: 0.7em;"></i></div>
+        <div class="column-content" id="col-progress"></div>
+      </div>
+
+      <div class="column">
+        <div class="column-header">Terminado <i class="fas fa-circle" style="color: #2ccce4; font-size: 0.7em;"></i></div>
+        <div class="column-content" id="col-done"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 Mi Portafolio - Desarrollado con SortableJS
+  </footer>
+
+  <script>
+    // Datos iniciales por defecto (solo si no hay nada guardado)
+    const defaultData = {
+      'col-todo': [
+        { title: 'Diseñar Mockup', desc: 'Crear bocetos en Figma', tag: 'Alta', color: 'tag-high' },
+        { title: 'Investigación', desc: 'Buscar referencias de UI', tag: 'Baja', color: 'tag-low' }
+      ],
+      'col-progress': [
+        { title: 'Desarrollar HTML', desc: 'Estructura semántica', tag: 'Media', color: 'tag-med' }
+      ],
+      'col-done': [
+        { title: 'Configurar Repo', desc: 'Github init y readme', tag: 'Alta', color: 'tag-high' }
+      ]
+    };
+
+    // Función para renderizar una tarjeta HTML
+    function createCardHTML(item) {
+      return `
+        <div class="item" style="border-left-color: ${getColorCode(item.color)}">
+          <span class="tag ${item.color}">${item.tag}</span>
+          <h4>${item.title}</h4>
+          <p>${item.desc}</p>
+          <div class="item-footer"><i class="far fa-user-circle"></i></div>
+        </div>
+      `;
+    }
+
+    // Auxiliar para color del borde
+    function getColorCode(className) {
+      if(className === 'tag-high') return '#ff5252';
+      if(className === 'tag-med') return '#ffb142';
+      return '#2ccce4';
+    }
+
+    // 1. Restaurar o Inicializar Datos
+    function loadBoard() {
+      const savedData = localStorage.getItem('kanbanData');
+      
+      if (savedData) {
+        // Si hay datos guardados, parseamos el HTML directamente
+        const parsed = JSON.parse(savedData);
+        document.getElementById('col-todo').innerHTML = parsed.todo;
+        document.getElementById('col-progress').innerHTML = parsed.progress;
+        document.getElementById('col-done').innerHTML = parsed.done;
+      } else {
+        // Cargar datos por defecto
+        document.getElementById('col-todo').innerHTML = defaultData['col-todo'].map(createCardHTML).join('');
+        document.getElementById('col-progress').innerHTML = defaultData['col-progress'].map(createCardHTML).join('');
+        document.getElementById('col-done').innerHTML = defaultData['col-done'].map(createCardHTML).join('');
+      }
+    }
+
+    // 2. Guardar el estado actual (HTML interno de las columnas)
+    function saveBoard() {
+      const data = {
+        todo: document.getElementById('col-todo').innerHTML,
+        progress: document.getElementById('col-progress').innerHTML,
+        done: document.getElementById('col-done').innerHTML
+      };
+      localStorage.setItem('kanbanData', JSON.stringify(data));
+    }
+
+    // Ejecutar carga inicial
+    loadBoard();
+
+    // 3. Inicializar Sortable en las 3 columnas
+    const columns = ['col-todo', 'col-progress', 'col-done'];
+    
+    columns.forEach(colId => {
+      new Sortable(document.getElementById(colId), {
+        group: 'kanban', // Mismo grupo para mover entre columnas
+        animation: 150,
+        ghostClass: 'sortable-ghost', // Clase para el espacio vacío
+        dragClass: 'sortable-drag',   // Clase para el elemento mientras se arrastra
+        delay: 0, // Sin retraso
+        onEnd: saveBoard // Guardar al soltar
+      });
+    });
+
+  </script>
+</body>
+</html>
